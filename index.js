@@ -57,6 +57,46 @@ app.post('/userAddToDb', async (req, res) => {
     }
 })
 
+app.post("/getToken", async (req, res) => {
+    try {
+        const { email } = req.body;
+        const newEmail = email;
+        if (!newEmail) {
+            return res.send({
+                success: false,
+                message: "Please provide email address"
+            })
+        } else {
+            const userEmail = await Users.findOne({ email: newEmail })
+            if (!userEmail) {
+                return res.send({
+                    success: false,
+                    message: "Email is doesn't exist"
+                })
+            } else {
+                const tokenObj = {
+                    email: newEmail
+                }
+
+                // console.log(tokenObj)
+                const token = jwt.sign(tokenObj, process.env.ACCESS_TOKEN_SECRET);
+                res.send({
+                    success: true,
+                    message: "Get Token successfully",
+                    data: tokenObj,
+                    token: token
+                })
+            }
+        }
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
 
 
 
