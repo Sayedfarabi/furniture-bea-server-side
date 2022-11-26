@@ -32,6 +32,7 @@ dbConnection()
 
 // Database Collection Name
 const Users = client.db("furnitureBea").collection("users");
+const category = client.db("furnitureBea").collection("category");
 
 app.post('/userAddToDb', async (req, res) => {
     try {
@@ -97,7 +98,31 @@ app.post("/getToken", async (req, res) => {
     }
 })
 
+app.post('/addCategory', async (req, res) => {
+    try {
+        const categoryData = req.body;
+        if (!categoryData) {
+            res.send({
+                success: false,
+                message: "data can not exist"
+            })
+        }
+        const data = await category.insertOne(categoryData)
+        if (data.acknowledged) {
+            res.send({
+                success: true,
+                message: "data added to Db successfully"
+            })
+        }
 
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
 
 
 
