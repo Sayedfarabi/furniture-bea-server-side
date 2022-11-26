@@ -11,7 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Db user and password 
+// Db User and Password 
 const dbUser = process.env.DB_USER;
 const dbPassword = process.env.DB_PASSWORD;
 
@@ -29,12 +29,37 @@ async function dbConnection() {
 
 dbConnection()
 
-// Start to Database Connection
 
-app.post('userAddToDb', (req, res) => {
-    const userData = req.body;
-    console.log(userData)
+// Database Collection Name
+const Users = client.db("furnitureBea").collection("users");
+
+app.post('/userAddToDb', async (req, res) => {
+    try {
+        const userData = req.body;
+        const data = await Users.insertOne(userData)
+        if (data.acknowledged) {
+            res.send({
+                success: true,
+                message: "Successfully added the user"
+            })
+        } else {
+            res.send({
+                success: false,
+                message: "Couldn't added the user"
+            })
+        }
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
 })
+
+
+
+
 
 
 // Server Running on Port Checking 
