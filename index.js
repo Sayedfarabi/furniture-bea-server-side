@@ -124,6 +124,20 @@ app.post('/addCategory', async (req, res) => {
     }
 })
 
+app.get("/", async (req, res) => {
+    try {
+        const query = {};
+        const data = await category.find(query).limit(3).toArray()
+        res.send(data)
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+
+})
 
 
 
