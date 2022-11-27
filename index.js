@@ -33,10 +33,14 @@ dbConnection()
 // Database Collection Name
 const Users = client.db("furnitureBea").collection("users");
 const category = client.db("furnitureBea").collection("category");
+const products = client.db("furnitureBea").collection("products");
 
 app.post('/userAddToDb', async (req, res) => {
     try {
         const userData = req.body;
+        userData.verified = false;
+        userData.bookings = [];
+        userData.wishes = [];
         const data = await Users.insertOne(userData)
         if (data.acknowledged) {
             res.send({
@@ -124,6 +128,39 @@ app.post('/addCategory', async (req, res) => {
     }
 })
 
+app.post('/addProduct', async (req, res) => {
+    try {
+        const productData = req.body;
+        if (productData) {
+            const data = await products.insertOne(productData)
+            if (data.acknowledged) {
+                res.send({
+                    success: true,
+                    message: "product data added successfully"
+                })
+            } else {
+                res.send({
+                    success: false,
+                    message: "data can not added to Database"
+                })
+            }
+
+        } else {
+            res.send({
+                success: false,
+                message: "Can not exist data"
+            })
+
+        }
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
 app.get("/", async (req, res) => {
     try {
         const query = {};
@@ -137,6 +174,36 @@ app.get("/", async (req, res) => {
         })
     }
 
+})
+
+app.get("/user", async (req, res) => {
+    try {
+        const email = req.query.email;
+        console.log(email)
+        if (email) {
+            const query = {
+                email: email
+            }
+            const data = await Users.findOne(query)
+            res.send({
+                success: true,
+                message: "user data get successfully",
+                data: data
+            })
+        } else {
+            res.send({
+                success: false,
+                message: "can not find email"
+            })
+        }
+
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
 })
 
 
