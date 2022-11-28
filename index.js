@@ -176,7 +176,7 @@ app.get("/", async (req, res) => {
 
 })
 
-app.get('/categories', async (req, res) => {
+app.get('/allCategories', async (req, res) => {
     try {
         const query = {};
         const data = await category.find(query).toArray()
