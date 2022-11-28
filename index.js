@@ -176,6 +176,20 @@ app.get("/", async (req, res) => {
 
 })
 
+app.get('/categories', async (req, res) => {
+    try {
+        const query = {};
+        const data = await category.find(query).toArray()
+        res.send(data)
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
 app.get("/user", async (req, res) => {
     try {
         const email = req.query.email;
