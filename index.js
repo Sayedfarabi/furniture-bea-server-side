@@ -222,6 +222,37 @@ app.get("/user", async (req, res) => {
 
 
 
+app.get("/category/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log(id)
+
+        if (id) {
+            const data = await products.find({ categoryId: id }).toArray();
+            // console.log(data)
+            res.send({
+                success: true,
+                products: data
+            })
+        } else {
+            console.log("does not exist categoryId")
+            res.send({
+                success: false,
+                message: "categoryId does not define"
+            })
+        }
+
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
+
+
 // Server Running on Port Checking 
 app.listen(port, () => {
     console.log(`This server running port on ${port}`);
