@@ -34,6 +34,7 @@ dbConnection()
 const Users = client.db("furnitureBea").collection("users");
 const category = client.db("furnitureBea").collection("category");
 const products = client.db("furnitureBea").collection("products");
+const bookingProducts = client.db("furnitureBea").collection("bookingProducts");
 
 app.post('/userAddToDb', async (req, res) => {
     try {
@@ -152,6 +153,37 @@ app.post('/addProduct', async (req, res) => {
             })
 
         }
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
+app.post("/addBooking", async (req, res) => {
+    try {
+        const bookingProduct = req.body;
+        const productId = bookingProduct.productId;
+        const isAdded = await bookingProducts.findOne({ productId: productId });
+        if (isAdded) {
+            res.send({
+                success: false,
+                message: "This product is  allready added"
+            })
+
+        }
+        else {
+            const result = await bookingProducts.insertOne(bookingProduct)
+            if (result.acknowledged) {
+                res.send({
+                    success: true,
+                    message: "booking product added successfully"
+                })
+            }
+        }
+
     } catch (error) {
         console.log(error.name.bgRed, error.message.yellow)
         res.send({
