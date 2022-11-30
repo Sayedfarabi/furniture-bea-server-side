@@ -216,7 +216,7 @@ app.post("/addWish", async (req, res) => {
             if (result.acknowledged) {
                 res.send({
                     success: true,
-                    message: "booking product added successfully"
+                    message: "Wish product added successfully"
                 })
             }
         }
@@ -297,6 +297,23 @@ app.get('/allCategories', async (req, res) => {
     }
 })
 
+app.get("/advertisement", async (req, res) => {
+    try {
+        const query = {};
+        const data = await advertisementProducts.find(query).toArray();
+        res.send({
+            success: true,
+            data: data
+        })
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
 app.get("/user", async (req, res) => {
     try {
         const email = req?.query?.email;
@@ -366,6 +383,75 @@ app.get("/myProducts", async (req, res) => {
     }
 })
 
+// app.get("/myOrder", async (req, res) => {
+//     try {
+//         const email = req?.query?.email;
+//         const query = {};
+//         const allProducts = await products.find(query).toArray()
+//         const bookQuery = {
+//             buyerEmail: email
+//         }
+//         const bookings = await bookingProducts.find(bookQuery).toArray()
+
+
+//         const myOrderProducts = allProducts.filter(product => product._id === bookings.forEach(booking => booking.productId))
+//         // Continue ...
+
+//         console.log(myOrderProducts)
+
+
+//     } catch (error) {
+//         console.log(error.name.bgRed, error.message.yellow)
+//         res.send({
+//             success: false,
+//             message: error.message
+//         })
+//     }
+// })
+
+app.get("/booking", async (req, res) => {
+    try {
+        const email = req?.query?.email;
+        if (email) {
+            const bookingQuery = {
+                buyerEmail: email
+            }
+            const data = await bookingProducts.find(bookingQuery).toArray()
+            res.send({
+                success: true,
+                data: data
+            })
+        } else {
+            res.send({
+                success: false,
+                message: "Buyer email does not exist"
+            })
+        }
+
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
+app.delete("/bookingDelete", async (req, res) => {
+    try {
+        const id = req?.query?.id;
+        const filter = { _id: ObjectId(id) };
+        const result = await bookingProducts.deleteOne(filter);
+        res.send(result);
+
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
 
 
 app.get("/category/:id", async (req, res) => {
@@ -424,3 +510,40 @@ app.delete("/productDelete", async (req, res) => {
 app.listen(port, () => {
     console.log(`This server running port on ${port}`);
 })
+
+
+
+// const email = req?.query?.email;
+//         console.log(email)
+//         if (email) {
+//             const query = {
+//                 buyerEmail: email
+//             }
+//             const orders = await bookingProducts.find(query).toArray()
+//             if (orders) {
+//                 // const myOrderProducts = [];
+
+//                 const myOrders = orders.map(async order => {
+
+//                     const productId = {
+//                         _id: ObjectId(order.productId)
+//                     }
+//                     const result = await products.findOne(productId)
+//                     return result
+//                 })
+//                 console.log(myOrders);
+
+
+//             } else {
+//                 res.send({
+//                     success: false,
+//                     message: "Your Order product is unavailable"
+//                 })
+//             }
+//         } else {
+//             res.send({
+//                 success: false,
+//                 message: "can not find email",
+//                 data: {}
+//             })
+//         }
