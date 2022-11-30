@@ -3,7 +3,7 @@ const cors = require("cors");
 const colors = require("colors");
 require("dotenv").config();
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId, ObjectID } = require('mongodb');
 const port = process.env.PORT || 5000;
 const app = express();
 
@@ -36,12 +36,12 @@ const category = client.db("furnitureBea").collection("category");
 const products = client.db("furnitureBea").collection("products");
 const bookingProducts = client.db("furnitureBea").collection("bookingProducts");
 const wishProducts = client.db("furnitureBea").collection("wishProducts");
+const advertisementProducts = client.db("furnitureBea").collection("advertisementProducts");
 
 app.post('/userAddToDb', async (req, res) => {
     try {
         const userData = req.body;
         userData.verified = false;
-        userData.wishes = [];
         const email = userData.email;
         const isAdded = await Users.findOne({ email: email })
         if (isAdded) {
@@ -230,6 +230,44 @@ app.post("/addWish", async (req, res) => {
     }
 })
 
+app.post("/productAddToAdvertisement", async (req, res) => {
+    try {
+        const id = req?.query?.id;
+
+        const productId = {
+            _id: ObjectId(id)
+        }
+        const isAdded = await advertisementProducts.findOne(productId)
+
+        if (!isAdded) {
+            const product = await products.findOne(productId);
+            if (product) {
+                const result = advertisementProducts.insertOne(product)
+                res.send({
+                    success: true,
+                    message: "Product Add to Advertisement Successfully"
+                })
+            } else {
+                res.send({
+                    success: false,
+                    message: "Does not exist product in products collection"
+                })
+            }
+        } else {
+            res.send({
+                success: false,
+                message: "This product Allready Added to Advertisement collection"
+            })
+        }
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
 app.get("/", async (req, res) => {
     try {
         const query = {};
@@ -276,7 +314,46 @@ app.get("/user", async (req, res) => {
         } else {
             res.send({
                 success: false,
-                message: "can not find email"
+                message: "can not find email",
+                data: {}
+            })
+        }
+
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
+app.get("/myProducts", async (req, res) => {
+    try {
+        const email = req?.query?.email;
+        console.log(email)
+        if (email) {
+            const query = {
+                sellerEmail: email
+            }
+            const data = await products.find(query).toArray()
+            if (data) {
+                res.send({
+                    success: true,
+                    message: "user data get successfully",
+                    data: data
+                })
+            } else {
+                res.send({
+                    success: false,
+                    message: "cannot data query in products collection"
+                })
+            }
+        } else {
+            res.send({
+                success: false,
+                message: "can not find email",
+                data: {}
             })
         }
 
@@ -319,6 +396,27 @@ app.get("/category/:id", async (req, res) => {
         })
     }
 })
+
+app.delete("/productDelete", async (req, res) => {
+    try {
+        const id = req?.query?.id;
+        console.log(id);
+        const filter = { _id: ObjectId(id) };
+        console.log(filter);
+        const result = await products.deleteOne(filter);
+        res.send(result);
+
+
+
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
 
 
 
