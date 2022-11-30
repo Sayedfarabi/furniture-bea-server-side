@@ -35,24 +35,30 @@ const Users = client.db("furnitureBea").collection("users");
 const category = client.db("furnitureBea").collection("category");
 const products = client.db("furnitureBea").collection("products");
 const bookingProducts = client.db("furnitureBea").collection("bookingProducts");
+const wishProducts = client.db("furnitureBea").collection("wishProducts");
 
 app.post('/userAddToDb', async (req, res) => {
     try {
         const userData = req.body;
         userData.verified = false;
-        userData.bookings = [];
         userData.wishes = [];
-        const data = await Users.insertOne(userData)
-        if (data.acknowledged) {
-            res.send({
-                success: true,
-                message: "Successfully added the user"
-            })
+        const email = userData.email;
+        const isAdded = await Users.findOne({ email: email })
+        if (isAdded) {
+            console.log("user allready added")
         } else {
-            res.send({
-                success: false,
-                message: "Couldn't added the user"
-            })
+            const data = await Users.insertOne(userData)
+            if (data.acknowledged) {
+                res.send({
+                    success: true,
+                    message: "Successfully added the user"
+                })
+            } else {
+                res.send({
+                    success: false,
+                    message: "Couldn't added the user"
+                })
+            }
         }
     } catch (error) {
         console.log(error.name.bgRed, error.message.yellow)
@@ -170,12 +176,43 @@ app.post("/addBooking", async (req, res) => {
         if (isAdded) {
             res.send({
                 success: false,
-                message: "This product is  allready added"
+                message: "This product is  allready added booking list"
             })
 
         }
         else {
             const result = await bookingProducts.insertOne(bookingProduct)
+            if (result.acknowledged) {
+                res.send({
+                    success: true,
+                    message: "booking product added successfully"
+                })
+            }
+        }
+
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
+app.post("/addWish", async (req, res) => {
+    try {
+        const wishProduct = req.body;
+        const productId = wishProduct.productId;
+        const isAdded = await wishProducts.findOne({ productId: productId });
+        if (isAdded) {
+            res.send({
+                success: false,
+                message: "This product is  allready added to wish list"
+            })
+
+        }
+        else {
+            const result = await wishProducts.insertOne(wishProduct)
             if (result.acknowledged) {
                 res.send({
                     success: true,
@@ -224,7 +261,7 @@ app.get('/allCategories', async (req, res) => {
 
 app.get("/user", async (req, res) => {
     try {
-        const email = req.query.email;
+        const email = req?.query?.email;
         console.log(email)
         if (email) {
             const query = {
