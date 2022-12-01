@@ -3,9 +3,11 @@ const cors = require("cors");
 const colors = require("colors");
 require("dotenv").config();
 const jwt = require('jsonwebtoken');
+const Auth = require("./middleWares/Auth");
 const { MongoClient, ServerApiVersion, ObjectId, ObjectID } = require('mongodb');
 const port = process.env.PORT || 5000;
 const app = express();
+
 
 // middle wares : 
 app.use(cors());
@@ -37,6 +39,17 @@ const products = client.db("furnitureBea").collection("products");
 const bookingProducts = client.db("furnitureBea").collection("bookingProducts");
 const wishProducts = client.db("furnitureBea").collection("wishProducts");
 const advertisementProducts = client.db("furnitureBea").collection("advertisementProducts");
+
+const verifyAdmin = async (req, res, next) => {
+    const decodedEmail = req?.decoded?.email;
+    const query = { email: decodedEmail };
+    const user = await Users.findOne(query);
+
+    if (user?.userRole !== 'admin') {
+        return res.status(403).send({ message: 'forbidden access' })
+    }
+    next();
+}
 
 app.post('/userAddToDb', async (req, res) => {
     try {
@@ -109,7 +122,7 @@ app.post("/getToken", async (req, res) => {
     }
 })
 
-app.post('/addCategory', async (req, res) => {
+app.post('/addCategory', Auth, verifyAdmin, async (req, res) => {
     try {
         const categoryData = req.body;
         if (!categoryData) {
@@ -135,7 +148,7 @@ app.post('/addCategory', async (req, res) => {
     }
 })
 
-app.post('/addProduct', async (req, res) => {
+app.post('/addProduct', Auth, async (req, res) => {
     try {
         const productData = req.body;
         if (productData) {
@@ -168,7 +181,7 @@ app.post('/addProduct', async (req, res) => {
     }
 })
 
-app.post("/addBooking", async (req, res) => {
+app.post("/addBooking", Auth, async (req, res) => {
     try {
         const bookingProduct = req.body;
         const productId = bookingProduct.productId;
@@ -199,7 +212,7 @@ app.post("/addBooking", async (req, res) => {
     }
 })
 
-app.post("/addWish", async (req, res) => {
+app.post("/addWish", Auth, async (req, res) => {
     try {
         const wishProduct = req.body;
         const productId = wishProduct.productId;
@@ -230,7 +243,7 @@ app.post("/addWish", async (req, res) => {
     }
 })
 
-app.post("/productAddToAdvertisement", async (req, res) => {
+app.post("/productAddToAdvertisement", Auth, async (req, res) => {
     try {
         const id = req?.query?.id;
 
@@ -345,7 +358,7 @@ app.get("/user", async (req, res) => {
     }
 })
 
-app.get("/myProducts", async (req, res) => {
+app.get("/myProducts", Auth, async (req, res) => {
     try {
         const email = req?.query?.email;
         console.log(email)
@@ -383,33 +396,9 @@ app.get("/myProducts", async (req, res) => {
     }
 })
 
-// app.get("/myOrder", async (req, res) => {
-//     try {
-//         const email = req?.query?.email;
-//         const query = {};
-//         const allProducts = await products.find(query).toArray()
-//         const bookQuery = {
-//             buyerEmail: email
-//         }
-//         const bookings = await bookingProducts.find(bookQuery).toArray()
 
 
-//         const myOrderProducts = allProducts.filter(product => product._id === bookings.forEach(booking => booking.productId))
-//         // Continue ...
-
-//         console.log(myOrderProducts)
-
-
-//     } catch (error) {
-//         console.log(error.name.bgRed, error.message.yellow)
-//         res.send({
-//             success: false,
-//             message: error.message
-//         })
-//     }
-// })
-
-app.get("/booking", async (req, res) => {
+app.get("/booking", Auth, async (req, res) => {
     try {
         const email = req?.query?.email;
         if (email) {
@@ -437,7 +426,36 @@ app.get("/booking", async (req, res) => {
     }
 })
 
-app.delete("/bookingDelete", async (req, res) => {
+
+app.get("/wishes", Auth, async (req, res) => {
+    try {
+        const email = req?.query?.email;
+        if (email) {
+            const wishQuery = {
+                email: email
+            }
+            const data = await wishProducts.find(wishQuery).toArray()
+            res.send({
+                success: true,
+                data: data
+            })
+        } else {
+            res.send({
+                success: false,
+                message: "Buyer email does not exist"
+            })
+        }
+
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
+app.delete("/bookingDelete", Auth, async (req, res) => {
     try {
         const id = req?.query?.id;
         const filter = { _id: ObjectId(id) };
@@ -453,8 +471,24 @@ app.delete("/bookingDelete", async (req, res) => {
     }
 })
 
+app.delete("/wishDelete", Auth, async (req, res) => {
+    try {
+        const id = req?.query?.id;
+        const filter = { _id: ObjectId(id) };
+        const result = await wishProducts.deleteOne(filter);
+        res.send(result);
 
-app.get("/category/:id", async (req, res) => {
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
+
+app.get("/category/:id", Auth, async (req, res) => {
     try {
         const { id } = req.params;
         console.log(id)
@@ -483,7 +517,7 @@ app.get("/category/:id", async (req, res) => {
     }
 })
 
-app.delete("/productDelete", async (req, res) => {
+app.delete("/productDelete", Auth, async (req, res) => {
     try {
         const id = req?.query?.id;
         console.log(id);
@@ -503,9 +537,115 @@ app.delete("/productDelete", async (req, res) => {
     }
 })
 
+app.get("/dashboard/payment/:id", Auth, async (req, res) => {
+    try {
+        const id = req?.params?.id;
+        console.log(id);
+        const query = {
+            _id: ObjectId(id)
+        }
+        const data = await bookingProducts.findOne(query)
+        if (data) {
+            res.send({
+                success: true,
+                data: data
+            })
+        }
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
 
+app.get("/allBuyer", Auth, verifyAdmin, async (req, res) => {
+    try {
+        const query = {
+            userRole: "buyer"
+        };
+        const data = await Users.find(query).toArray();
+        res.send({
+            success: true,
+            data: data
+        })
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
 
+app.get("/allSeller", Auth, verifyAdmin, async (req, res) => {
+    try {
+        const query = {
+            userRole: "seller"
+        };
+        const data = await Users.find(query).toArray();
+        res.send({
+            success: true,
+            data: data
+        })
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
 
+app.delete("/deleteUser", Auth, verifyAdmin, async (req, res) => {
+    try {
+        const email = req?.query?.email;
+        const query = {
+            email: email
+        }
+        const result = await Users.deleteOne(query)
+        console.log(result);
+        res.send(result)
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
+app.patch("/verifyUser", Auth, verifyAdmin, async (req, res) => {
+    try {
+        const email = req?.query?.email;
+        const query = {
+            email: email
+        }
+        const result = await Users.updateOne(query, {
+            $set: {
+                verified: true
+            }
+        })
+        if (result.matchedCount) {
+            res.send({
+                success: true,
+                message: "Successfully verified updated"
+            })
+        } else {
+            res.send({
+                success: false,
+                message: "Couldn't update"
+            })
+        }
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+})
 // Server Running on Port Checking 
 app.listen(port, () => {
     console.log(`This server running port on ${port}`);
@@ -513,37 +653,3 @@ app.listen(port, () => {
 
 
 
-// const email = req?.query?.email;
-//         console.log(email)
-//         if (email) {
-//             const query = {
-//                 buyerEmail: email
-//             }
-//             const orders = await bookingProducts.find(query).toArray()
-//             if (orders) {
-//                 // const myOrderProducts = [];
-
-//                 const myOrders = orders.map(async order => {
-
-//                     const productId = {
-//                         _id: ObjectId(order.productId)
-//                     }
-//                     const result = await products.findOne(productId)
-//                     return result
-//                 })
-//                 console.log(myOrders);
-
-
-//             } else {
-//                 res.send({
-//                     success: false,
-//                     message: "Your Order product is unavailable"
-//                 })
-//             }
-//         } else {
-//             res.send({
-//                 success: false,
-//                 message: "can not find email",
-//                 data: {}
-//             })
-//         }
