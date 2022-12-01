@@ -646,6 +646,46 @@ app.patch("/verifyUser", Auth, verifyAdmin, async (req, res) => {
         })
     }
 })
+
+app.patch("/makeNewAdmin", Auth, verifyAdmin, async (req, res) => {
+    try {
+        const adminNewEmail = req?.query?.email;
+        const query = {
+            email: adminNewEmail
+        }
+        const isUser = await Users.findOne(query)
+        if (isUser) {
+            const result = await Users.updateOne(query, {
+                $set: {
+                    userRole: "admin",
+                    verified: true
+                }
+            })
+            if (result.matchedCount) {
+                res.send({
+                    success: true,
+                    message: `${adminNewEmail} is updated for new admin`
+                })
+            }
+        } else {
+            res.send({
+                success: false,
+                message: `${adminNewEmail} is could not exist to User Collection`
+            })
+        }
+
+    } catch (error) {
+        console.log(error.name.bgRed, error.message.yellow)
+        res.send({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+
+
+)
 // Server Running on Port Checking 
 app.listen(port, () => {
     console.log(`This server running port on ${port}`);
