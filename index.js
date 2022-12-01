@@ -5,6 +5,7 @@ require("dotenv").config();
 const jwt = require('jsonwebtoken');
 const Auth = require("./middleWares/Auth");
 const { MongoClient, ServerApiVersion, ObjectId, ObjectID } = require('mongodb');
+const stripe = require("stripe")(process.env.STRIP_SECRET);
 const port = process.env.PORT || 5000;
 const app = express();
 
@@ -686,6 +687,41 @@ app.patch("/makeNewAdmin", Auth, verifyAdmin, async (req, res) => {
 
 
 )
+
+// app.post('/create-payment-intent', Auth, async (req, res) => {
+//     try {
+//         const productPrice = req?.body;
+//         // console.log(productPrice);
+//         if (productPrice) {
+//             const paymentIntent = await stripe.paymentIntents.create({
+//                 currency: 'usd',
+//                 amount: productPrice,
+//                 "payment_method_types": [
+//                     "card"
+//                 ]
+//             });
+//             res.send({
+//                 clientSecret: paymentIntent.client_secret,
+//             });
+//         } else {
+//             res.send({
+//                 success: false,
+//                 message: "can not exist product price"
+//             })
+//         }
+
+//     } catch (error) {
+//         console.log(error.name.bgRed, error.message.yellow)
+//         res.send({
+//             success: false,
+//             message: error.message
+//         })
+//     }
+// });
+
+
+
+
 // Server Running on Port Checking 
 app.listen(port, () => {
     console.log(`This server running port on ${port}`);
