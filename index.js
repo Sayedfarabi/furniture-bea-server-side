@@ -186,7 +186,12 @@ app.post("/addBooking", Auth, async (req, res) => {
     try {
         const bookingProduct = req.body;
         const productId = bookingProduct.productId;
-        const isAdded = await bookingProducts.findOne({ productId: productId });
+        const buyerEmail = bookingProduct.buyerEmail;
+        const query = {
+            buyerEmail: buyerEmail,
+            productId: productId
+        }
+        const isAdded = await bookingProducts.findOne(query);
         if (isAdded) {
             res.send({
                 success: false,
@@ -217,7 +222,14 @@ app.post("/addWish", Auth, async (req, res) => {
     try {
         const wishProduct = req.body;
         const productId = wishProduct.productId;
-        const isAdded = await wishProducts.findOne({ productId: productId });
+        const email = wishProduct.email;
+        const query = {
+            email: email,
+            productId: productId
+        }
+        console.log(query);
+        const isAdded = await wishProducts.findOne(query);
+        console.log(isAdded);
         if (isAdded) {
             res.send({
                 success: false,
@@ -458,9 +470,13 @@ app.get("/wishes", Auth, async (req, res) => {
 
 app.delete("/bookingDelete", Auth, async (req, res) => {
     try {
+        const email = req.body;
         const id = req?.query?.id;
-        const filter = { _id: ObjectId(id) };
-        const result = await bookingProducts.deleteOne(filter);
+        const query = {
+            _id: ObjectId(id),
+            buyerEmail: email.buyerEmail
+        }
+        const result = await bookingProducts.deleteOne(query);
         res.send(result);
 
     } catch (error) {
@@ -475,8 +491,15 @@ app.delete("/bookingDelete", Auth, async (req, res) => {
 app.delete("/wishDelete", Auth, async (req, res) => {
     try {
         const id = req?.query?.id;
-        const filter = { _id: ObjectId(id) };
-        const result = await wishProducts.deleteOne(filter);
+        const buyerEmail = req?.body;
+        console.log(buyerEmail);
+        const query = {
+            _id: ObjectId(id),
+            email: buyerEmail?.buyerEmail
+        }
+        console.log(query);
+        const result = await wishProducts.deleteOne(query);
+        console.log(result);
         res.send(result);
 
     } catch (error) {
