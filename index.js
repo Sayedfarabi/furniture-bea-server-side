@@ -410,7 +410,6 @@ app.get("/myProducts", Auth, async (req, res) => {
     }
 })
 
-
 app.get("/booking", Auth, async (req, res) => {
     try {
         const email = req?.query?.email;
@@ -753,6 +752,9 @@ app.post("/payment", Auth, async (req, res) => {
         const query = {
             _id: ObjectId(productId)
         }
+        const bookingQuery = {
+            productId
+        }
         const updateProduct = {
             $set: {
                 inStock: "unavailable",
@@ -764,6 +766,7 @@ app.post("/payment", Auth, async (req, res) => {
         if (updateResult.modifiedCount > 0) {
             const result = await payments.insertOne(paymentInfo)
             if (result.acknowledged) {
+                const bookingDelete = await bookingProducts.deleteOne(bookingQuery)
                 res.send({
                     success: true,
                     message: "product update and payment added done"
